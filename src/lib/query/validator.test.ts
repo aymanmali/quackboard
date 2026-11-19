@@ -23,4 +23,19 @@ describe("validateReadOnlySql", () => {
       validateReadOnlySql("SELECT * FROM superstore WHERE category = 'DROP AND DELETE' -- update test").valid
     ).toBe(true);
   });
+
+  it("handles comment markers inside strings and apostrophes inside comments", () => {
+    expect(
+      validateReadOnlySql("SELECT '-- not a comment' AS note, '/* also text */' AS note2 FROM superstore").valid
+    ).toBe(true);
+    expect(
+      validateReadOnlySql("SELECT '-- DROP TABLE users' FROM superstore").valid
+    ).toBe(true);
+    expect(
+      validateReadOnlySql("-- don't drop this\nSELECT * FROM superstore WHERE status = 'ok'").valid
+    ).toBe(true);
+    expect(
+      validateReadOnlySql("SELECT '-- ok' FROM superstore; DROP TABLE superstore").valid
+    ).toBe(false);
+  });
 });

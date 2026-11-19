@@ -23,14 +23,19 @@ const FORBIDDEN_KEYWORDS = [
 ];
 
 /**
- * Strips SQL comments and string literals before checking for forbidden DDL/DML keywords.
+ * Strips SQL comments and string literals in a single left-to-right pass so
+ * comment markers inside strings (e.g. `'--'`) and quotes inside comments
+ * (e.g. `-- don't`) never interfere with each other.
  */
 function stripCommentsAndStrings(sql: string): string {
-  return sql
-    .replace(/--[^\n]*/g, " ")
-    .replace(/\/\*[\s\S]*?\*\//g, " ")
-    .replace(/'(?:''|[^'])*'/g, "''")
-    .replace(/"(?:""|[^"])*"/g, '""');
+  return sql.replace(
+    /'(?:''|[^'])*'|"(?:""|[^"])*"|--[^\n]*|\/\*[\s\S]*?\*\//g,
+    (match) => {
+      if (match.startsWith("'")) return "''";
+      if (match.startsWith('"')) return '""';
+      return " ";
+    }
+  );
 }
 
 export interface SqlValidationResult {

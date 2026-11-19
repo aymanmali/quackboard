@@ -1,5 +1,11 @@
 # QuackBoard
 
+[![CI](https://github.com/aymanmali/quackboard/actions/workflows/ci.yml/badge.svg)](https://github.com/aymanmali/quackboard/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/aymanmali/quackboard?color=2563EB)](https://github.com/aymanmali/quackboard/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10B981.svg)](./LICENSE)
+[![DuckDB-Wasm](https://img.shields.io/badge/Engine-DuckDB--Wasm-F59E0B.svg)](https://duckdb.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000.svg)](https://nextjs.org/)
+
 **QuackBoard** is an open-source, Tableau-like Business Intelligence (BI) web platform powered by **DuckDB-Wasm**, **Apache ECharts**, and **Next.js**.
 
 Analyze local CSV, Parquet, Excel, and JSON files right inside your browser with zero setup—or connect live **PostgreSQL** and **MySQL** databases to build interactive, cross-filtered dashboards.

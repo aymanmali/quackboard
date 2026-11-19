@@ -29,28 +29,6 @@ Analyze local CSV, Parquet, Excel, and JSON files right inside your browser with
 
 ---
 
-## Quickstart (Local Zero-Config Mode)
-
-```bash
-git clone https://github.com/aymanmali/quackboard.git
-cd quackboard
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-## Self-Hosting with Docker Compose (Full-Stack + PostgreSQL)
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-QuackBoard runs on [http://localhost:3000](http://localhost:3000) backed by PostgreSQL 16.
-
----
-
 ## Architecture
 
 ```text

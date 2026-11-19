@@ -1,11 +1,14 @@
 # QuackBoard
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-quackboard--rosy.vercel.app-2563EB?style=flat&logo=vercel)](https://quackboard-rosy.vercel.app)
 [![CI](https://github.com/aymanmali/quackboard/actions/workflows/ci.yml/badge.svg)](https://github.com/aymanmali/quackboard/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/aymanmali/quackboard?color=2563EB)](https://github.com/aymanmali/quackboard/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10B981.svg)](./LICENSE)
 [![DuckDB-Wasm](https://img.shields.io/badge/Engine-DuckDB--Wasm-F59E0B.svg)](https://duckdb.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000.svg)](https://nextjs.org/)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Faymanmali%2Fquackboard)
+
+**Try it live in your browser (zero signup):** https://quackboard-rosy.vercel.app
 
 **QuackBoard** is an open-source, Tableau-like Business Intelligence (BI) web platform powered by **DuckDB-Wasm**, **Apache ECharts**, and **Next.js**.
 

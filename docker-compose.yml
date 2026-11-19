@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: quackboard
+      POSTGRES_PASSWORD: quackboard_dev_password
+      POSTGRES_DB: quackboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - quackboard_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quackboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  quackboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://quackboard:quackboard_dev_password@postgres:5432/quackboard
+      QUACKBOARD_ENCRYPTION_KEY: ${QUACKBOARD_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+      QUACKBOARD_QUERY_TIMEOUT_MS: 15000
+      QUACKBOARD_MAX_ROWS: 10000
+
+volumes:
+  quackboard_pgdata:

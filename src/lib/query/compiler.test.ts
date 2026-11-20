@@ -98,4 +98,23 @@ describe("compileVisualQuery", () => {
       compileVisualQuery(query, "users; DROP TABLE users", sampleColumns, "postgres")
     ).toThrow(/Invalid table identifier/);
   });
+
+  it("compiles eq/neq null filters as IS NULL and IS NOT NULL without extra bind params", () => {
+    const query: VisualQuery = {
+      datasetId: "orders",
+      dimensions: [{ column: "region" }],
+      measures: [{ column: "sales", aggregation: "sum" }],
+      filters: [
+        { column: "region", operator: "eq", value: null },
+        { column: "category", operator: "neq", value: null },
+        { column: "sales", operator: "gt", value: 50 },
+      ],
+    };
+
+    const compiled = compileVisualQuery(query, "orders", sampleColumns, "postgres");
+    expect(compiled.sql).toContain(`"region" IS NULL`);
+    expect(compiled.sql).toContain(`"category" IS NOT NULL`);
+    expect(compiled.sql).toContain(`"sales" > $1`);
+    expect(compiled.params).toEqual([50]);
+  });
 });

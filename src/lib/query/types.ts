@@ -54,7 +54,7 @@ export interface QueryFilter {
   id?: string;
   column: string;
   operator: FilterOperator;
-  value: string | number | boolean | Array<string | number>;
+  value: string | number | boolean | null | Array<string | number>;
 }
 
 export interface SortSpec {

@@ -138,6 +138,13 @@ function compileFilterClause(
     case "gte":
     case "lt":
     case "lte": {
+      if (
+        (filter.operator === "eq" || filter.operator === "neq") &&
+        (filter.value === null || filter.value === undefined)
+      ) {
+        const nullClause = `${qCol} ${filter.operator === "eq" ? "IS NULL" : "IS NOT NULL"}`;
+        return { parameterized: nullClause, preview: nullClause };
+      }
       const opMap: Record<string, string> = {
         eq: "=",
         neq: "!=",

@@ -37,5 +37,11 @@ describe("validateReadOnlySql", () => {
     expect(
       validateReadOnlySql("SELECT '-- ok' FROM superstore; DROP TABLE superstore").valid
     ).toBe(false);
+    expect(
+      validateReadOnlySql("SELECT * FROM superstore /* trailing unclosed comment").valid
+    ).toBe(true);
+    expect(
+      validateReadOnlySql("/* unclosed comment only").valid
+    ).toBe(false);
   });
 });

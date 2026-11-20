@@ -117,4 +117,32 @@ describe("compileVisualQuery", () => {
     expect(compiled.sql).toContain(`"sales" > $1`);
     expect(compiled.params).toEqual([50]);
   });
+
+  it("compiles empty IN filter to 1 = 0 and empty NOT IN filter to 1 = 1", () => {
+    const emptyIn = compileVisualQuery(
+      {
+        datasetId: "orders",
+        dimensions: [{ column: "region" }],
+        measures: [],
+        filters: [{ column: "region", operator: "in", value: [] }],
+      },
+      "orders",
+      sampleColumns,
+      "duckdb"
+    );
+    expect(emptyIn.sql).toContain("WHERE 1 = 0");
+
+    const emptyNotIn = compileVisualQuery(
+      {
+        datasetId: "orders",
+        dimensions: [{ column: "region" }],
+        measures: [],
+        filters: [{ column: "region", operator: "not_in", value: [] }],
+      },
+      "orders",
+      sampleColumns,
+      "duckdb"
+    );
+    expect(emptyNotIn.sql).toContain("WHERE 1 = 1");
+  });
 });

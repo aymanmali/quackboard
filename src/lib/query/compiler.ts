@@ -165,7 +165,8 @@ function compileFilterClause(
     case "not_in": {
       const list = Array.isArray(filter.value) ? filter.value : [filter.value];
       if (list.length === 0) {
-        return { parameterized: "1 = 1", preview: "1 = 1" };
+        const emptyClause = filter.operator === "in" ? "1 = 0" : "1 = 1";
+        return { parameterized: emptyClause, preview: emptyClause };
       }
       const kw = filter.operator === "in" ? "IN" : "NOT IN";
       const tokens = list.map((v) => nextPlaceholder(v));

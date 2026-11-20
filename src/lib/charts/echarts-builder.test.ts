@@ -68,5 +68,8 @@ describe("echarts-builder", () => {
     expect(formatNumericValue(12500, "currency")).toBe("$12,500");
     expect(formatNumericValue(0.245, "percent")).toBe("24.5%");
     expect(formatNumericValue(1_500_000, "compact")).toBe("1.5M");
+    expect(formatNumericValue("", "decimal")).toBe("");
+    expect(formatNumericValue(false, "decimal")).toBe("false");
+    expect(formatNumericValue(Infinity, "currency")).toBe("Infinity");
   });
 });

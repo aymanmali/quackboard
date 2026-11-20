@@ -30,9 +30,17 @@ export const COLOR_PALETTES: Record<ChartFormatting["palette"], string[]> = {
 };
 
 export function formatNumericValue(value: unknown, format: NumberFormat = "auto"): string {
-  const num = Number(value);
-  if (value === null || value === undefined || Number.isNaN(num)) {
+  if (
+    value === null ||
+    value === undefined ||
+    typeof value === "boolean" ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
     return String(value ?? "");
+  }
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    return String(value);
   }
 
   switch (format) {

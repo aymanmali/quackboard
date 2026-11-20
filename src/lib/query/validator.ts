@@ -29,7 +29,7 @@ const FORBIDDEN_KEYWORDS = [
  */
 function stripCommentsAndStrings(sql: string): string {
   return sql.replace(
-    /'(?:''|[^'])*'|"(?:""|[^"])*"|--[^\n]*|\/\*[\s\S]*?\*\//g,
+    /'(?:''|[^'])*'|"(?:""|[^"])*"|--[^\n]*|\/\*[\s\S]*?(?:\*\/|$)/g,
     (match) => {
       if (match.startsWith("'")) return "''";
       if (match.startsWith('"')) return '""';

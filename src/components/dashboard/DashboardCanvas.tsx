@@ -17,7 +17,11 @@ import {
   X,
   FileText,
   BarChart3,
+  Lightbulb,
+  Loader2,
 } from "lucide-react";
+import { callExplainInsights } from "@/lib/ai/ai-client";
+import { InsightsResponse } from "@/lib/ai/types";
 import {
   Dashboard,
   DashboardTile,
@@ -210,6 +214,11 @@ export function DashboardCanvas({ dashboardId }: { dashboardId: string }) {
   const [noteTitle, setNoteTitle] = useState("");
   const [noteBody, setNoteBody] = useState("");
 
+  // AI Executive Briefing
+  const [briefing, setBriefing] = useState<InsightsResponse | null>(null);
+  const [briefingLoading, setBriefingLoading] = useState(false);
+  const [briefingError, setBriefingError] = useState<string | null>(null);
+
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
@@ -340,6 +349,67 @@ export function DashboardCanvas({ dashboardId }: { dashboardId: string }) {
     URL.revokeObjectURL(url);
   };
 
+  const handleGenerateBriefing = async () => {
+    if (!dashboard) return;
+    setBriefingLoading(true);
+    setBriefingError(null);
+    try {
+      const chartTiles = dashboard.tiles
+        .filter((t) => t.kind === "chart" && t.chartId)
+        .map((t) => chartsMap.get(t.chartId!))
+        .filter((c): c is SavedChart => Boolean(c));
+
+      const activeFilters: QueryFilter[] = [];
+      for (const gf of dashboard.globalFilters) {
+        const selected = globalFilterValues[gf.id];
+        if (selected) {
+          activeFilters.push({ column: gf.column, operator: "eq", value: selected });
+        }
+      }
+      if (crossFilter) {
+        activeFilters.push({ column: crossFilter.column, operator: "eq", value: crossFilter.value });
+      }
+
+      // Run primary non-KPI chart (or fallback to first chart) for rich executive summary
+      const targetChart =
+        chartTiles.find((c) => c.chartType !== "kpi") ?? chartTiles[0];
+      if (!targetChart) {
+        setBriefingError("Add at least one chart tile to generate AI Insights.");
+        return;
+      }
+
+      const ds = datasetsMap.get(targetChart.datasetId);
+      if (!ds) {
+        setBriefingError("Dataset for primary chart is not available.");
+        return;
+      }
+
+      const relevantFilters = activeFilters.filter(() => true);
+      const res = await executeVisualQuery(ds, {
+        ...targetChart.query,
+        filters: [...(targetChart.query.filters ?? []), ...relevantFilters],
+      });
+
+      const kpiNames = chartTiles
+        .filter((c) => c.chartType === "kpi")
+        .map((c) => c.name)
+        .join(", ");
+
+      const insight = await callExplainInsights({
+        title: dashboard.name,
+        result: res,
+        context: `Primary visual: ${targetChart.name}. Dashboard KPIs: ${kpiNames || "N/A"}. Active filters: ${
+          relevantFilters.map((f) => `${f.column}=${String(f.value)}`).join(", ") || "None"
+        }`,
+      });
+      setBriefing(insight);
+    } catch (err) {
+      setBriefingError(err instanceof Error ? err.message : "Failed to generate AI briefing");
+    } finally {
+      setBriefingLoading(false);
+    }
+  };
+
   const hasAnyActiveFilter =
     Boolean(crossFilter) || Object.values(globalFilterValues).some((v) => v !== "");
 
@@ -413,6 +483,19 @@ export function DashboardCanvas({ dashboardId }: { dashboardId: string }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={briefingLoading}
+            onClick={handleGenerateBriefing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-950/60 dark:hover:bg-violet-900/60 dark:text-violet-300 dark:border-violet-800 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {briefingLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Lightbulb className="w-3.5 h-3.5" />
+            )}
+            AI Insights
+          </button>
           <button
             type="button"
             onClick={() => setAddModalOpen(true)}
@@ -501,6 +584,53 @@ export function DashboardCanvas({ dashboardId }: { dashboardId: string }) {
               <RotateCcw className="w-3 h-3" />
               Reset All
             </button>
+          )}
+        </div>
+      )}
+
+      {/* AI Executive Briefing Banner */}
+      {briefingError && (
+        <div className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-center justify-between">
+          <span>{briefingError}</span>
+          <button type="button" onClick={() => setBriefingError(null)} className="cursor-pointer">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {briefing && (
+        <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-gradient-to-r from-violet-50/80 via-white to-blue-50/60 dark:from-violet-950/30 dark:via-slate-900 dark:to-blue-950/20 p-4 shadow-sm space-y-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {briefing.headline}
+                </h3>
+                <span className="text-[11px] font-medium text-violet-600 dark:text-violet-400">
+                  AI Executive Briefing • {briefing.engine}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBriefing(null)}
+              className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 list-disc pl-5">
+            {briefing.bullets.map((b, idx) => (
+              <li key={idx}>{b}</li>
+            ))}
+          </ul>
+          {briefing.anomalies.length > 0 && (
+            <div className="text-xs text-amber-800 dark:text-amber-300 font-medium pl-1">
+              {briefing.anomalies.map((a, idx) => (
+                <div key={idx}>⚠ {a}</div>
+              ))}
+            </div>
           )}
         </div>
       )}

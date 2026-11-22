@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlertCircle, Loader2, Play, Table2, Terminal } from "lucide-react";
+import { AlertCircle, Loader2, Play, Sparkles, Table2, Terminal, Wand2 } from "lucide-react";
 import { Dataset, QueryResult } from "@/lib/query/types";
 import { executeAdHocSql } from "@/lib/engines/query-runner";
+import { callSqlCopilot } from "@/lib/ai/ai-client";
 import { listDatasets } from "@/lib/storage/indexeddb-store";
 import { DataTable } from "@/components/charts/DataTable";
 
@@ -16,6 +17,9 @@ export default function SqlLabPage() {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiNote, setAiNote] = useState<string | null>(null);
 
   useEffect(() => {
     listDatasets().then((ds) => {
@@ -40,6 +44,28 @@ export default function SqlLabPage() {
       setError(err instanceof Error ? err.message : "SQL execution failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAiSql = async (fixMode = false) => {
+    if (!activeDataset) return;
+    if (!fixMode && !aiPrompt.trim()) return;
+    setAiLoading(true);
+    setAiNote(null);
+    try {
+      const resp = await callSqlCopilot({
+        prompt: fixMode ? aiPrompt || "Fix query error" : aiPrompt,
+        dataset: activeDataset,
+        errorToFix: fixMode && error ? error : undefined,
+        currentSql: fixMode ? sql : undefined,
+      });
+      setSql(resp.sql);
+      setAiNote(`${resp.explanation} (${resp.engine})`);
+      if (fixMode) setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "SQL Copilot failed");
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -98,6 +124,41 @@ export default function SqlLabPage() {
 
       {/* Main Editor + Results */}
       <section className="flex-1 flex flex-col min-w-0 p-4 gap-4 bg-slate-50 dark:bg-slate-950">
+        {/* AI SQL Copilot Bar */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAiSql(false);
+          }}
+          className="rounded-xl border border-violet-200 dark:border-violet-800/70 bg-white dark:bg-slate-900 px-3.5 py-2.5 shadow-xs flex flex-wrap items-center gap-2"
+        >
+          <div className="flex items-center gap-1.5 text-xs font-bold text-violet-700 dark:text-violet-300 shrink-0">
+            <Sparkles className="w-4 h-4" />
+            <span>AI SQL Copilot</span>
+          </div>
+          <input
+            type="text"
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder="Ask in plain English (e.g., Total sales and profit by region)..."
+            className="flex-1 min-w-[220px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+          />
+          <button
+            type="submit"
+            disabled={aiLoading || !aiPrompt.trim() || !activeDataset}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+          >
+            {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+            Generate SQL
+          </button>
+        </form>
+
+        {aiNote && (
+          <div className="px-3.5 py-2 rounded-lg bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 text-xs text-violet-800 dark:text-violet-200">
+            {aiNote}
+          </div>
+        )}
+
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col">
           <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200">
@@ -131,9 +192,20 @@ export default function SqlLabPage() {
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs font-medium text-rose-700 dark:text-rose-300">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs font-medium text-rose-700 dark:text-rose-300">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              disabled={aiLoading}
+              onClick={() => handleAiSql(true)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+            >
+              <Wand2 className="w-3 h-3" />
+              Fix with AI
+            </button>
           </div>
         )}
 

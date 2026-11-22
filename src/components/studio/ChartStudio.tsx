@@ -35,7 +35,13 @@ import {
   X,
   Check,
   TrendingUp,
+  Wand2,
+  Lightbulb,
+  Loader2,
+  ArrowRight,
 } from "lucide-react";
+import { callAskChart, callExplainInsights } from "@/lib/ai/ai-client";
+import { InsightsResponse } from "@/lib/ai/types";
 import {
   AggregationFn,
   ChartFormatting,
@@ -218,6 +224,13 @@ export function ChartStudio() {
   const [selectedDashId, setSelectedDashId] = useState<string>("");
   const [savedToast, setSavedToast] = useState<string | null>(null);
 
+  // AI Studio state
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiBanner, setAiBanner] = useState<{ text: string; engine: string } | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insights, setInsights] = useState<InsightsResponse | null>(null);
+
   const chartRef = useRef<EChartsHandle | null>(null);
 
   const sensors = useSensors(
@@ -300,6 +313,8 @@ export function ChartStudio() {
     const nextDs = datasets.find((d) => d.id === nextId);
     if (!nextDs) return;
     setActiveDatasetId(nextId);
+    setAiBanner(null);
+    setInsights(null);
     const defaultDim = nextDs.columns.find((c) => c.role === "dimension");
     const defaultMeasure = nextDs.columns.find((c) => c.role === "measure");
     setQuery({
@@ -312,6 +327,47 @@ export function ChartStudio() {
       filters: [],
       limit: 500,
     });
+  };
+
+  const handleAskAi = async (customPrompt?: string) => {
+    const text = (customPrompt ?? aiPrompt).trim();
+    if (!text || !activeDataset) return;
+    if (customPrompt) setAiPrompt(customPrompt);
+    setAiLoading(true);
+    setError(null);
+    setInsights(null);
+    try {
+      const resp = await callAskChart(text, activeDataset);
+      setChartName(resp.title);
+      setChartType(resp.chartType);
+      setQuery(resp.query);
+      if (resp.formatting) {
+        setFormatting((prev) => ({ ...prev, ...resp.formatting }));
+      }
+      setAiBanner({ text: resp.explanation, engine: resp.engine });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "AI chart generation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleExplainChart = async () => {
+    if (!result) return;
+    setInsightsLoading(true);
+    setError(null);
+    try {
+      const resp = await callExplainInsights({
+        title: chartName,
+        result,
+        context: activeDataset ? `Dataset: ${activeDataset.name}` : undefined,
+      });
+      setInsights(resp);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate insights");
+    } finally {
+      setInsightsLoading(false);
+    }
   };
 
   const openFilterBuilder = async (col: ColumnMeta) => {
@@ -554,6 +610,19 @@ export function ChartStudio() {
               )}
               <button
                 type="button"
+                disabled={!result || insightsLoading}
+                onClick={handleExplainChart}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-950/60 dark:hover:bg-violet-900/60 dark:text-violet-300 dark:border-violet-800 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {insightsLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Lightbulb className="w-3.5 h-3.5" />
+                )}
+                Explain
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowSql((s) => !s)}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                   showSql
@@ -590,6 +659,70 @@ export function ChartStudio() {
                 Save Chart
               </button>
             </div>
+          </div>
+
+          {/* Ask QuackBoard AI Prompt Bar */}
+          <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-violet-50/70 via-white to-blue-50/70 dark:from-violet-950/20 dark:via-slate-900 dark:to-blue-950/20 space-y-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAskAi();
+              }}
+              className="flex flex-wrap items-center gap-2"
+            >
+              <div className="flex items-center gap-1.5 text-xs font-bold text-violet-700 dark:text-violet-300 shrink-0">
+                <Sparkles className="w-4 h-4" />
+                <span>Ask QuackBoard AI</span>
+              </div>
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="Ask anything... e.g., Top 5 sub-categories by profit as horizontal bar"
+                className="flex-1 min-w-[220px] px-3 py-1.5 rounded-lg border border-violet-200 dark:border-violet-800/70 bg-white dark:bg-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+              />
+              <button
+                type="submit"
+                disabled={aiLoading || !aiPrompt.trim() || !activeDataset}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                Ask AI
+              </button>
+            </form>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Try:</span>
+              {[
+                "Top 5 sub-categories by profit as horizontal bar",
+                "Monthly sales trend by category",
+                "Revenue share by segment as donut",
+              ].map((sample) => (
+                <button
+                  key={sample}
+                  type="button"
+                  onClick={() => handleAskAi(sample)}
+                  className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 hover:border-violet-400 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  {sample}
+                </button>
+              ))}
+            </div>
+
+            {aiBanner && (
+              <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-violet-100/70 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 text-xs text-violet-900 dark:text-violet-200">
+                <span>
+                  <strong>{aiBanner.engine}:</strong> {aiBanner.text}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAiBanner(null)}
+                  className="p-0.5 hover:bg-black/10 rounded cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Tableau-Style Shelves */}
@@ -747,10 +880,11 @@ export function ChartStudio() {
           </div>
 
           {/* Visualization Canvas */}
-          <div className="flex-1 p-4 flex flex-col gap-3 min-h-[440px]">
-            <div className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 min-h-[400px] flex flex-col">
-              <div className="flex-1 w-full h-[380px] min-h-[360px]">
-                <ChartView
+          <div className="flex-1 p-4 flex flex-col gap-3">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4">
+              <div className="relative w-full h-[420px]">
+                <div className="absolute inset-0">
+                  <ChartView
                   ref={chartRef}
                   title={chartName}
                   chartType={chartType}
@@ -761,8 +895,65 @@ export function ChartStudio() {
                   loading={loading}
                   error={error}
                 />
+                </div>
               </div>
             </div>
+
+            {insights && (
+              <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                        {insights.headline}
+                      </h4>
+                      <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400">
+                        AI Executive Insights • {insights.engine}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setInsights(null)}
+                    className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 list-disc pl-5">
+                  {insights.bullets.map((b, idx) => (
+                    <li key={idx}>{b}</li>
+                  ))}
+                </ul>
+
+                {insights.anomalies.length > 0 && (
+                  <div className="px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                    {insights.anomalies.map((a, idx) => (
+                      <div key={idx}>⚠ {a}</div>
+                    ))}
+                  </div>
+                )}
+
+                {insights.followUpQuestions.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[11px] font-semibold text-slate-500">Follow up:</span>
+                    {insights.followUpQuestions.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => handleAskAi(q)}
+                        className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/50 dark:hover:bg-violet-900/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 cursor-pointer"
+                      >
+                        <span>{q}</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {showSql && result?.sql && (
               <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-900 text-slate-100 p-4 font-mono text-xs overflow-x-auto">

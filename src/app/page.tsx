@@ -14,7 +14,9 @@ import {
   ArrowRight,
   FileSpreadsheet,
   Sparkles,
+  Wand2,
 } from "lucide-react";
+import { AutoDashboardModal } from "@/components/ai/AutoDashboardModal";
 import { Dashboard, Dataset, SavedChart } from "@/lib/query/types";
 import {
   deleteDashboard,
@@ -35,6 +37,7 @@ export default function HomePage() {
   const [creating, setCreating] = useState(false);
   const [newDashName, setNewDashName] = useState("");
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [autoDashOpen, setAutoDashOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadAll = async () => {
@@ -128,6 +131,15 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setAutoDashOpen(true)}
+              disabled={datasets.length === 0}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white text-sm font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Wand2 className="w-4 h-4" />
+              AI Auto-Dashboard
+            </button>
             <Link
               href="/explore"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-colors"
@@ -371,6 +383,12 @@ export default function HomePage() {
           </div>
         </section>
       </div>
+
+      <AutoDashboardModal
+        open={autoDashOpen}
+        onClose={() => setAutoDashOpen(false)}
+        datasets={datasets}
+      />
     </div>
   );
 }

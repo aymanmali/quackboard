@@ -14,7 +14,9 @@ import {
   X,
   AlertCircle,
   BarChart3,
+  Wand2,
 } from "lucide-react";
+import { AutoDashboardModal } from "@/components/ai/AutoDashboardModal";
 import { ColumnMeta, DataSourceConfig, Dataset } from "@/lib/query/types";
 import { ingestFileIntoDuckDB, sanitizeTableName } from "@/lib/engines/duckdb-client";
 import { deleteDataset, listDatasets, saveDataset } from "@/lib/storage/indexeddb-store";
@@ -32,6 +34,7 @@ export default function SourcesPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const [autoDashDatasetId, setAutoDashDatasetId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Live DB Connection Modal state
@@ -354,6 +357,14 @@ export default function SourcesPage() {
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setAutoDashDatasetId(ds.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white text-xs font-semibold cursor-pointer"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    AI Dashboard
+                  </button>
                   <Link
                     href={`/explore?datasetId=${ds.id}`}
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
@@ -589,6 +600,13 @@ export default function SourcesPage() {
           </form>
         </div>
       )}
+
+      <AutoDashboardModal
+        open={Boolean(autoDashDatasetId)}
+        onClose={() => setAutoDashDatasetId(null)}
+        datasets={datasets}
+        initialDatasetId={autoDashDatasetId ?? undefined}
+      />
     </div>
   );
 }

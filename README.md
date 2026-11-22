@@ -3,20 +3,28 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-quackboard--rosy.vercel.app-2563EB?style=flat&logo=vercel)](https://quackboard-rosy.vercel.app)
 [![CI](https://github.com/aymanmali/quackboard/actions/workflows/ci.yml/badge.svg)](https://github.com/aymanmali/quackboard/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/aymanmali/quackboard?color=2563EB)](https://github.com/aymanmali/quackboard/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-10B981.svg)](./LICENSE)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-6366F1.svg)](./LICENSE)
 [![DuckDB-Wasm](https://img.shields.io/badge/Engine-DuckDB--Wasm-F59E0B.svg)](https://duckdb.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000.svg)](https://nextjs.org/)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Faymanmali%2Fquackboard)
 
 **Try it live in your browser (zero signup):** https://quackboard-rosy.vercel.app
 
-**QuackBoard** is an open-source, Tableau-like Business Intelligence (BI) web platform powered by **DuckDB-Wasm**, **Apache ECharts**, and **Next.js**.
+**QuackBoard** is an AI-powered, source-available (free for personal, educational & non-commercial use) Tableau-like Business Intelligence (BI) web platform built with **DuckDB-Wasm**, **Apache ECharts**, **Vercel AI SDK**, and **Next.js**.
 
 Analyze local CSV, Parquet, Excel, and JSON files right inside your browser with zero setup—or connect live **PostgreSQL** and **MySQL** databases to build interactive, cross-filtered dashboards.
 
 ---
 
-## Features (v0.1)
+## What's New in v0.2.0 — Full AI Suite
+
+- **Ask QuackBoard AI (`/explore`):** Type plain-English analytics questions (e.g., *"Top 5 sub-categories by profit as horizontal bar"*) to automatically populate Chart Studio shelves, choose visualizations, and generate dialect-safe SQL.
+- **1-Click AI Auto-Dashboard (`/` & `/sources`):** Select any dataset and optionally enter an analytical goal to automatically build KPI cards, trend lines, breakdowns, and global filter bars onto an interactive dashboard.
+- **AI Executive Insights (`/explore` & `/dashboards/[id]`):** Click **Explain** or **AI Insights** to generate executive summaries, anomaly alerts, and clickable follow-up questions directly from query results.
+- **AI SQL Copilot (`/sql`):** Generate read-only DuckDB / PostgreSQL / MySQL queries from plain English, plus a one-click **"Fix with AI"** button when a SQL error occurs.
+- **Multi-Provider Vercel AI SDK + Zero-Key Local Fallback:** Supports **Google Gemini** (default), **OpenAI**, and **Anthropic** via server keys or browser Bring-Your-Own-Key (BYOK) in **AI Settings**, plus a deterministic zero-key local engine so every AI feature works out of the box.
+
+## Core BI Features
 
 - **Tableau-Style Chart Studio (`/explore`):** Drag-and-drop blue **Dimension** pills and green **Measure** pills onto Columns (X), Rows (Y), Color, and Filter shelves with aggregations (`SUM`, `AVG`, `COUNT`, `COUNTD`, `MIN`, `MAX`) and date bucketing (`Day` → `Year`).
 - **9 Interactive Visualizations:** Auto-recommend, Bar, Stacked Bar, Horizontal Bar, Line, Area, Pie/Donut, Scatter, KPI Metric Cards, and sortable/filterable Data Tables (`@tanstack/react-table`).
@@ -29,16 +37,40 @@ Analyze local CSV, Parquet, Excel, and JSON files right inside your browser with
 
 ---
 
+## Quickstart
+
+```bash
+git clone https://github.com/aymanmali/quackboard.git
+cd quackboard
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Self-Hosting with Docker Compose
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+---
+
 ## Architecture
 
 ```text
 Browser (Next.js App Router + React + Tailwind + ECharts)
  ├── Local Files (CSV / Parquet / Excel / JSON) ──► DuckDB-Wasm Web Worker
  ├── Zero-Config Storage                        ──► IndexedDB
- └── Live SQL Datasets                          ──► Next.js API (/api/query)
-                                                      ├── Safe Visual Query AST Compiler
-                                                      ├── AES-256-GCM Secret Vault
-                                                      └── PostgreSQL / MySQL (READ ONLY)
+ ├── Live SQL Datasets                          ──► Next.js API (/api/query)
+ │                                                    ├── Safe Visual Query AST Compiler
+ │                                                    ├── AES-256-GCM Secret Vault
+ │                                                    └── PostgreSQL / MySQL (READ ONLY)
+ └── AI Suite                                   ──► Next.js API (/api/ai/*)
+                                                      ├── Vercel AI SDK (Gemini / OpenAI / Anthropic)
+                                                      ├── BYOK Support + Rate Limiting
+                                                      └── Zero-Key Local Analytical Fallback
 ```
 
 ---
@@ -48,7 +80,7 @@ Browser (Next.js App Router + React + Tailwind + ECharts)
 ```bash
 npm run typecheck   # TypeScript strict check
 npm run lint        # ESLint
-npm test            # Vitest unit tests (SQL compiler, security, chart builder)
+npm test            # Vitest unit tests (SQL compiler, security, chart builder, AI fallback)
 npm run build       # Production Next.js build
 ```
 
@@ -56,10 +88,13 @@ npm run build       # Production Next.js build
 
 ## Roadmap
 
-- **v0.2:** User authentication (GitHub / Email OAuth), team workspaces, and shareable read-only embed links
-- **v0.3:** Calculated fields / custom metrics & semantic layer
-- **v0.4:** Additional connectors (BigQuery, Snowflake, ClickHouse, REST APIs) & AI natural-language chart builder
+- **v0.3:** User authentication (GitHub / Email OAuth), cloud workspaces, and shareable read-only embed links
+- **v0.4:** Calculated fields / custom metrics, semantic layer, and BigQuery / Snowflake / ClickHouse connectors
 
-## License
+## Licensing
 
-MIT — see [LICENSE](./LICENSE).
+**QuackBoard v0.2.0+** is **source-available** under the **PolyForm Noncommercial License 1.0.0** — see [LICENSE](./LICENSE).
+
+- **Free for personal, educational, academic, and non-profit use.**
+- **Commercial use** (internal business use or hosted commercial offerings) requires a separate commercial license from the author.
+- *(Note: QuackBoard `v0.1.0` remains available under the MIT License as tagged at `v0.1.0`.)*

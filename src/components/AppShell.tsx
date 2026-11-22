@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,6 +12,9 @@ import {
   Terminal,
   Sparkles,
 } from "lucide-react";
+import { loadAiConfig } from "@/lib/ai/ai-client";
+import { AiProviderId } from "@/lib/ai/types";
+import { AiSettingsModal } from "./ai/AiSettingsModal";
 import { useTheme } from "./ThemeProvider";
 
 const NAV_ITEMS = [
@@ -21,9 +24,37 @@ const NAV_ITEMS = [
   { href: "/sql", label: "SQL Lab", icon: Terminal },
 ];
 
+function formatAiBadgeLabel(provider: AiProviderId, hasKey: boolean): string {
+  switch (provider) {
+    case "google":
+      return hasKey ? "AI: Gemini BYOK" : "AI: Gemini";
+    case "openai":
+      return hasKey ? "AI: OpenAI BYOK" : "AI: OpenAI";
+    case "anthropic":
+      return hasKey ? "AI: Claude BYOK" : "AI: Claude";
+    case "local":
+      return "AI: Local Engine";
+    case "auto":
+    default:
+      return hasKey ? "AI: Auto (BYOK)" : "AI: Auto / Local";
+  }
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiLabel, setAiLabel] = useState("AI: Auto / Local");
+
+  useEffect(() => {
+    const refreshLabel = () => {
+      const cfg = loadAiConfig();
+      setAiLabel(formatAiBadgeLabel(cfg.provider, Boolean(cfg.apiKey?.trim())));
+    };
+    refreshLabel();
+    window.addEventListener("quackboard-ai-config-changed", refreshLabel);
+    return () => window.removeEventListener("quackboard-ai-config-changed", refreshLabel);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -39,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   QuackBoard
                 </span>
                 <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                  Open-Source BI
+                  AI Visual BI
                 </span>
               </div>
             </Link>
@@ -71,13 +102,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <div
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"
-              title="In-browser analytical SQL powered by DuckDB-Wasm"
+            <button
+              type="button"
+              onClick={() => setAiModalOpen(true)}
+              title="Configure AI provider or Bring Your Own Key (BYOK)"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-50 hover:bg-violet-100 text-violet-800 border border-violet-200 dark:bg-violet-950/50 dark:hover:bg-violet-900/60 dark:text-violet-300 dark:border-violet-800/70 transition-colors cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>DuckDB-Wasm Ready</span>
-            </div>
+              <span>{aiLabel}</span>
+            </button>
 
             <button
               type="button"
@@ -92,6 +125,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1 flex flex-col">{children}</main>
+
+      <AiSettingsModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} />
     </div>
   );
 }

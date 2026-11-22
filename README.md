@@ -86,11 +86,6 @@ npm run build       # Production Next.js build
 
 ---
 
-## Roadmap
-
-- **v0.3:** User authentication (GitHub / Email OAuth), cloud workspaces, and shareable read-only embed links
-- **v0.4:** Calculated fields / custom metrics, semantic layer, and BigQuery / Snowflake / ClickHouse connectors
-
 ## Licensing
 
 **QuackBoard v0.2.0+** is **source-available** under the **PolyForm Noncommercial License 1.0.0** — see [LICENSE](./LICENSE).

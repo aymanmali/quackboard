@@ -5,7 +5,7 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     app: "QuackBoard",
-    version: "0.2.0",
+    version: "0.3.0",
     storageMode: isPostgresConfigured() ? "postgres" : "local-indexeddb",
   });
 }

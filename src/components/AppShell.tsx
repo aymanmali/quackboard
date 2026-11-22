@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Bot,
   Database,
   LayoutDashboard,
   Moon,
@@ -20,6 +21,7 @@ import { useTheme } from "./ThemeProvider";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboards", icon: LayoutDashboard },
   { href: "/explore", label: "Chart Studio", icon: BarChart3 },
+  { href: "/agent", label: "AI Analyst", icon: Bot },
   { href: "/sources", label: "Data Sources", icon: Database },
   { href: "/sql", label: "SQL Lab", icon: Terminal },
 ];

@@ -16,7 +16,16 @@ Analyze local CSV, Parquet, Excel, and JSON files right inside your browser with
 
 ---
 
-## What's New in v0.2.0 — Full AI Suite
+## What's New in v0.3.0 — Autonomous AI Data Analyst (`/agent`)
+
+- **Hybrid Browser-Server ReAct Agent Loop:** Multi-step autonomous analyst (`<= 8` steps) via Vercel AI SDK v7 tools + client-side DuckDB-Wasm execution — keeping raw CSV/Parquet/Excel rows private inside the browser while sending only compact tool observations (<= 50 rows) to the planner.
+- **6 Executable Agent Tools:** `inspect_schema`, `profile_column`, `run_sql_query`, `analyze_variance`, `create_chart`, and `create_dashboard`.
+- **Automatic SQL Self-Repair:** If a query errors or hits a bad identifier/syntax, the agent reads the engine error message and rewrites & retries automatically inside the loop.
+- **Human-in-the-Loop (HITL) Guardrails:** Toggle between **Auto-Approve Writes** and **Require Approval for Writes** before saving charts or assembling dashboards.
+- **Live Transparent Agent Trace & Grounded Report:** Watch every reasoning step, SQL call, latency (`ms`), **Self-Healed** badge, inline ECharts visuals, and numerically grounded findings with citations.
+- **Automated Vitest Agent Evals:** Evaluates multi-step tool sequencing, SQL self-repair, numeric grounding, and destructive SQL / HITL guardrails on every CI run.
+
+## AI Suite (v0.2.0)
 
 - **Ask QuackBoard AI (`/explore`):** Type plain-English analytics questions (e.g., *"Top 5 sub-categories by profit as horizontal bar"*) to automatically populate Chart Studio shelves, choose visualizations, and generate dialect-safe SQL.
 - **1-Click AI Auto-Dashboard (`/` & `/sources`):** Select any dataset and optionally enter an analytical goal to automatically build KPI cards, trend lines, breakdowns, and global filter bars onto an interactive dashboard.

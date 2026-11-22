@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   BarChart3,
+  Bot,
   Database,
   Download,
   LayoutDashboard,
@@ -131,6 +132,13 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/agent"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-sm font-semibold shadow-sm transition-all"
+            >
+              <Bot className="w-4 h-4" />
+              Launch AI Analyst
+            </Link>
             <button
               type="button"
               onClick={() => setAutoDashOpen(true)}

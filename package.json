@@ -1,6 +1,6 @@
 {
   "name": "quackboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "AI-powered, source-available Tableau-like Business Intelligence platform built with DuckDB-Wasm, Apache ECharts, Vercel AI SDK, and Next.js",
   "private": true,
   "license": "PolyForm-Noncommercial-1.0.0",

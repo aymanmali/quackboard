@@ -97,4 +97,3 @@ npm run build       # Production Next.js build
 
 - **Free for personal, educational, academic, and non-profit use.**
 - **Commercial use** (internal business use or hosted commercial offerings) requires a separate commercial license from the author.
-- *(Note: QuackBoard `v0.1.0` remains available under the MIT License as tagged at `v0.1.0`.)*
